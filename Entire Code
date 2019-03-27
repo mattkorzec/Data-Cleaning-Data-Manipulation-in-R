@@ -323,6 +323,9 @@ rm(list=ls())
 # Import the RDR report
 data <- read_csv("XX###-historical.csv")
 
+# Read Excel Workbook file
+data <- read_xls("xx###-inventory.xls")
+
 x <- data %>%
   rename(Date = `Retail Date`, Model = `Model Name`) %>%
   filter(Status == 'RDR') %>%
@@ -356,7 +359,8 @@ x <- data %>%
   rename(Year = 'Model Year', Active = '# Active', Sold = '# Sold', DDS = 'Dlr Day Supply',
          MDS = 'Mkt Day Supply') %>%
   filter(is.na(Trim)) %>%
-  filter(Type != '---')
+  filter(Type != '---') %>%
+  filter(Year != 2018)
 
 # Filter by Model
 type <- x %>%
@@ -378,8 +382,8 @@ write.csv(models, file = "il071_models.csv", row.names = FALSE)
 models <- as.data.frame(models)
 type <- as.data.frame(type)
 
-write.xlsx(type, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "DDS vs MDS", row.names = FALSE, append = TRUE)
-write.xlsx(models, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "DDS vs MDSv2", row.names = FALSE, append = TRUE)
+write.xlsx(type, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "DDS vs MDS", row.names = FALSE, append = TRUE)
+write.xlsx(models, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "DDS vs MDSv2", row.names = FALSE, append = TRUE)
 
 ##########################################################################################
 Summarizing the profits.
