@@ -351,12 +351,14 @@ x <- data %>%
 # Filter by Model
 type <- x %>%
   filter(is.na(Model)) %>%
-  select(-(Trim))
+  select(-(Trim)) %>%
+  select(-(Model))
 
 # Filter by Type
 models <- x %>%
   filter(!is.na(Model)) %>%
-  select(-(Trim))
+  select(-(Trim)) %>%
+  select(-(Type))
 
 # Export Files to Excel
 write.csv(type, file = "il071_type.csv", row.names = FALSE)
