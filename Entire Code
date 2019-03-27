@@ -8,6 +8,7 @@ rm(list=ls())
 # Load packages
 library(tidyverse)
 library(lubridate)
+library(readxl)
 
 # Set file path to desktop
 setwd("C:/Users/mkorzec/Downloads")
@@ -280,6 +281,9 @@ rm(list=ls())
 
 # Read file from desktop
 inv <- read_csv("il088-inventory.csv")
+
+# Read Excel Workbook file
+inv <- read_xlsx("il082-inventory.xlsx")
 
 # Transform into usable data
 c <- inv %>%
