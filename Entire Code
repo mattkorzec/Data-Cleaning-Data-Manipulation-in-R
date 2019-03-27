@@ -9,6 +9,7 @@ rm(list=ls())
 library(tidyverse)
 library(lubridate)
 library(readxl)
+library(xlsx)
 
 # Set file path to desktop
 setwd("C:/Users/mkorzec/Downloads")
@@ -18,7 +19,7 @@ Cleaning up and combining the sales data.
 ##########################################################################################
 
 # Read file from desktop
-data <- read_csv("3-25-FL123.csv")
+data <- read_csv("#-##-XX###.csv")
 
 # The pipeline / data preparation
 data7 <- data %>% 
@@ -280,10 +281,10 @@ Cleaning and setting up the inventory data.
 rm(list=ls())
 
 # Read file from desktop
-inv <- read_csv("il088-inventory.csv")
+inv <- read_csv("xx###-inventory.csv")
 
 # Read Excel Workbook file
-inv <- read_xlsx("il082-inventory.xlsx")
+inv <- read_xlsx("xx###-inventory.xlsx")
 
 # Transform into usable data
 c <- inv %>%
@@ -308,6 +309,10 @@ c <- inv %>%
 # Export the new data into an Excel
 write.csv(c, file = "IL088_Inventory_Report.csv", row.names = FALSE)
 
+# Export to an existing excel workbook as a new sheet
+new <- as.data.frame(c)
+write.xlsx(new, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Inventory", row.names = FALSE, append = TRUE)
+
 ##########################################################################################
 Preparing data for time-series analysis.
 ##########################################################################################
@@ -316,7 +321,7 @@ Preparing data for time-series analysis.
 rm(list=ls())
 
 # Import the RDR report
-data <- read_csv("IL088-historical.csv")
+data <- read_csv("XX###-historical.csv")
 
 x <- data %>%
   rename(Date = `Retail Date`, Model = `Model Name`) %>%
@@ -330,6 +335,10 @@ x <- data %>%
 
 write.csv(x, file = "Time_Series_IL088.csv", row.names = FALSE)
 
+# Export to an existing excel workbook as a new sheet
+ts <- as.data.frame(x)
+write.xlsx(ts, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Time Series", row.names = FALSE, append = TRUE)
+
 ##########################################################################################
 Preparing DDS and MDS data.
 ##########################################################################################
@@ -338,7 +347,7 @@ Preparing DDS and MDS data.
 rm(list=ls())
 
 # Import data
-data <- read_csv("vauto_il071.csv")
+data <- read_csv("vauto_xx###.csv")
 
 # Clean up the data
 x <- data %>%
@@ -346,7 +355,8 @@ x <- data %>%
   select(-c(`Pricing Rules`, Action, `Min Stock`, `Target Day Supply`)) %>%
   rename(Year = 'Model Year', Active = '# Active', Sold = '# Sold', DDS = 'Dlr Day Supply',
          MDS = 'Mkt Day Supply') %>%
-  filter(is.na(Trim))
+  filter(is.na(Trim)) %>%
+  filter(Type != '---')
 
 # Filter by Model
 type <- x %>%
@@ -363,6 +373,13 @@ models <- x %>%
 # Export Files to Excel
 write.csv(type, file = "il071_type.csv", row.names = FALSE)
 write.csv(models, file = "il071_models.csv", row.names = FALSE)
+
+# Export to an existing excel file as new sheets
+models <- as.data.frame(models)
+type <- as.data.frame(type)
+
+write.xlsx(type, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "DDS vs MDS", row.names = FALSE, append = TRUE)
+write.xlsx(models, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "DDS vs MDSv2", row.names = FALSE, append = TRUE)
 
 ##########################################################################################
 Summarizing the profits.
@@ -389,6 +406,9 @@ x <- data %>%
 
 # Export Files to Excel
 write.csv(x, file = "il071_Profits.csv", row.names = FALSE)
+
+x <- as.data.frame(x)
+write.xlsx(x, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "Profit", row.names = FALSE, append = TRUE)
 
 
 
