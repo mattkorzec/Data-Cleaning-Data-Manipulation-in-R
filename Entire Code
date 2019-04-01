@@ -1,5 +1,5 @@
 ##########################################################################################
-Setting up R.
+# Setting up R.
 ##########################################################################################
 
 # Clear all data
@@ -15,7 +15,7 @@ library(xlsx)
 setwd("C:/Users/mkorzec/Downloads")
 
 ##########################################################################################
-Cleaning up and combining the sales data.
+# Cleaning up and combining the sales data.
 ##########################################################################################
 
 # Read file from desktop
@@ -245,7 +245,7 @@ final <- data7 %>%
 write.csv(final, file = "2019_FL123_Sales_Report.csv", row.names = FALSE) 
 
 ##########################################################################################
-Combining all data.
+# Combining all data.
 ##########################################################################################
 
 # Clear all data
@@ -274,7 +274,7 @@ all_data <- rbind(il071, il082, il088, mo046, fl121, fl123, in048)
 write.csv(all_data, file = "2019_Hyundai_Sales_Report.csv", row.names = FALSE)
 
 ##########################################################################################
-Cleaning and setting up the inventory data.
+# Cleaning and setting up the inventory data.
 ##########################################################################################
 
 # Clear all data
@@ -314,7 +314,7 @@ new <- as.data.frame(c)
 write.xlsx(new, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Inventory", row.names = FALSE, append = TRUE)
 
 ##########################################################################################
-Preparing data for time-series analysis.
+# Preparing data for time-series analysis.
 ##########################################################################################
 
 # Clear all data
@@ -343,7 +343,7 @@ ts <- as.data.frame(x)
 write.xlsx(ts, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Time Series", row.names = FALSE, append = TRUE)
 
 ##########################################################################################
-Preparing DDS and MDS data.
+# Preparing DDS and MDS data.
 ##########################################################################################
 
 # Clear all data
@@ -386,7 +386,7 @@ write.xlsx(type, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "DDS vs MD
 write.xlsx(models, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "DDS vs MDSv2", row.names = FALSE, append = TRUE)
 
 ##########################################################################################
-Summarizing the profits.
+# Summarizing the profits.
 ##########################################################################################
 
 # Clear all data
@@ -414,6 +414,104 @@ write.csv(x, file = "il071_Profits.csv", row.names = FALSE)
 x <- as.data.frame(x)
 write.xlsx(x, file = "2019_Hyundai_Sales_Report_Template.xlsx", sheetName = "Profit", row.names = FALSE, append = TRUE)
 
+##########################################################################################
+# Calculating and Finding Potential Trades.
+##########################################################################################
+
+# Read Excel Workbook file
+fl121 <- read_xlsx("all_inv.xlsx", sheet = 'FL121')
+fl123 <- read_xlsx("all_inv.xlsx", sheet = 'FL123')
+il071 <- read_xlsx("all_inv.xlsx", sheet = 'IL071')
+il082 <- read_xlsx("all_inv.xlsx", sheet = 'IL082')
+il088 <- read_xlsx("all_inv.xlsx", sheet = 'IL088')
+in048 <- read_xlsx("all_inv.xlsx", sheet = 'IN048')
+mo046 <- read_xlsx("all_inv.xlsx", sheet = 'MO046')
+
+# add Dealership Columns
+fl121 <- fl121 %>% add_column(Dealership = 'FL121')
+fl123 <- fl123 %>% add_column(Dealership = 'FL123')
+il071 <- il071 %>% add_column(Dealership = 'IL071')
+il082 <- il082 %>% add_column(Dealership = 'IL082')
+il088 <- il088 %>% add_column(Dealership = 'IL088')
+in048 <- in048 %>% add_column(Dealership = 'IN048')
+mo046 <- mo046 %>% add_column(Dealership = 'MO046')
+
+inv <- rbind(fl121, fl123, il071, il082, il088, in048, mo046)
+
+# Selecting approperiate data
+x <- inv %>%
+  rename(Status = 'Recommended Order') %>%
+  select(Year, Model, Trim, Status, Dealership) %>%
+  filter(Year > 2018) %>%
+  filter(Status > 2 | Status < -2) %>%
+  unite('Car', c('Year', 'Model', 'Trim'), sep = ' ', remove = TRUE)
 
 
+# All dealerships potential trades
+need <- x %>% 
+  filter(Status > 2) %>%
+  unite('Car', c('Year', 'Model', 'Trim'), sep = ' ', remove = TRUE) %>%
+  rename('Needed' = Status)
+
+not_need <- x %>% 
+  filter(Status < -2) %>%
+  unite('Car', c('Year', 'Model', 'Trim'), sep = ' ', remove = TRUE) %>%
+  rename('# Extra' = Status)
+
+c <- inner_join(need, not_need, by = 'Car')
+
+final <- c %>%
+  mutate(Extra = `# Extra` * (-1)) %>%
+  select(-(`# Extra`)) %>%
+  select(Car, Dealership.x, Needed, Dealership.y, Extra)
+
+# Potential Florida Dealership Trades
+fl_need <- x %>% 
+  filter(Status > 2) %>%
+  rename('Needed' = Status) %>%
+  filter(Dealership == 'FL121' | Dealership == 'FL123')
+
+fl_not_need <- x %>% 
+  filter(Status < -2) %>%
+  rename('# Extra' = Status) %>%
+  filter(Dealership == 'FL121' | Dealership == 'FL123')
+
+fl_trades <- inner_join(fl_need, fl_not_need, by = 'Car')
+
+fl_trades <- fl_trades %>%
+  mutate(Extra = `# Extra` * (-1)) %>%
+  select(-(`# Extra`)) %>%
+  select(Car, Dealership.x, Needed, Dealership.y, Extra)
+
+# Potential Midwest Dealership Trades
+midwest_need <- x %>% 
+  filter(Status > 2) %>%
+  rename('Needed' = Status) %>%
+  filter(Dealership == 'IL071' | Dealership == 'IL082' | Dealership == 'IL088' | 
+           Dealership == 'IN048' | Dealership == 'MO046')
+
+midwest_not_need <- x %>% 
+  filter(Status < -2) %>%
+  rename('# Extra' = Status) %>%
+  filter(Dealership == 'IL071' | Dealership == 'IL082' | Dealership == 'IL088' | 
+           Dealership == 'IN048' | Dealership == 'MO046')
+
+midwest_trades <- inner_join(midwest_need, midwest_not_need, by = 'Car')
+
+midwest_trades <- midwest_trades %>%
+  mutate(Extra = `# Extra` * (-1)) %>%
+  select(-(`# Extra`)) %>%
+  select(Car, Dealership.x, Needed, Dealership.y, Extra) %>%
+  arrange(Car)
+
+
+# Export table to excel sheets
+fl <- as.data.frame(fl_trades)
+mid <- as.data.frame(midwest_trades)
+
+write.xlsx(fl, file = "Huyndai_Potential_Trades.xlsx", sheetName = "Florida", 
+           row.names = FALSE, append = FALSE)
+
+write.xlsx(mid, file = "Huyndai_Potential_Trades.xlsx", sheetName = "Midwest", 
+           row.names = FALSE, append = TRUE)
 
