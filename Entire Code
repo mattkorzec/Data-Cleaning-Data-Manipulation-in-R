@@ -297,7 +297,7 @@ c <- inv %>%
   select(-(Code)) %>%
   rename(Average = 'Avg Mth Sales', Total = 'Total Avail') %>%
   mutate(Average = as.numeric(Average), Total = as.numeric(Total)) %>%
-  mutate(Expected_Sales = (Average*3)*1.2) %>%
+  mutate(Expected_Sales = (Average*3)) %>%
   mutate(Recommended = (Expected_Sales - Total)) %>%
   mutate(Recommended = ceiling(Recommended)) %>%
   rename('Days In Stock' = 'D/S', '30 Days' = 'ETA in 30 Days', '60 Days' = 'ETA in 60 Days', 'Over 60 Days' = 'ETA in 60+ Days',
