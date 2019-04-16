@@ -18,7 +18,7 @@ setwd("C:/Users/mkorzec/Downloads")
 # Cleaning up and combining the sales data.
 ##########################################################################################
 
-list_of_files <- list.files(pattern = "^4-9")
+list_of_files <- list.files(pattern = "^4-16")
 
 data7 <- list_of_files %>%
   setNames(nm = c("fl121", "fl123", "il071", "il082", "il088", "in048", "mo046")) %>%
@@ -135,6 +135,7 @@ data7$Model[data7$Model == 'Q0402A45'] = 'Kona SE AWD'
 data7$Model[data7$Model == '47412F45'] = 'Elantra SE'
 data7$Model[data7$Model == '28452F45'] = 'Sonata Limited 2.0T'
 data7$Model[data7$Model == 'B2452R85'] = 'G80 RWD 5.0 Ultimate'
+data7$Model[data7$Model == 'Q0492A45'] = 'Kona Iron Man Edition AWD'
 
 
 # Change Exterior Names
@@ -207,6 +208,9 @@ data7$Exterior[data7$Exterior == 'PR2'] = "RED"
 data7$Exterior[data7$Exterior == 'MJB'] = "BLACK"
 data7$Exterior[data7$Exterior == 'WT'] = "BEIGE"
 data7$Exterior[data7$Exterior == 'Y6S'] = "SILVER"
+data7$Exterior[data7$Exterior == 'RTR'] = "GRAY"
+data7$Exterior[data7$Exterior == 'V9R'] = "RED"
+data7$Exterior[data7$Exterior == 'SFB'] = "BLUE"
 
 
 # Change Interior Names
@@ -243,11 +247,11 @@ data7$Interior[data7$Interior == 'PKG'] = "GRAY"
 # Change seat names
 data7$Seat[data7$Seat == 'BLACK W/ LIME'] = "BLACK"
 
-final <- data7 %>% separate(Model, into = c("Model", "Trim"), sep = " ", extra = "merge")
+final <- data7 %>% separate(Model, into = c("Model", "Trim"), sep = " ", extra = "merge") 
 
 # Export the new data into an Excel
 final <- as.data.frame(final)
-write.xlsx(final, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Raw Sales Data", row.names = FALSE, 
+write.xlsx(final, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Raw Data", row.names = FALSE, 
            append = FALSE)
 
 ##########################################################################################
@@ -257,7 +261,7 @@ write.xlsx(final, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Raw Sale
 # Clear all data
 rm(list=ls())
 
-# Read Excel Workbook files
+# Read Excel Workbook file
 fl123 <- read_xlsx("fl123-inventory.xlsx")
 fl121 <- read_xlsx("fl121-inventory.xlsx")
 il071 <- read_xlsx("il071-inventory.xlsx")
@@ -300,3 +304,156 @@ c <- inv %>%
 new <- as.data.frame(c)
 write.xlsx(new, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Inventory", row.names = FALSE, append = TRUE)
 
+##########################################################################################
+# Cleaning and setting up the vAuto data.
+##########################################################################################
+
+# Clear all data
+rm(list=ls())
+
+# Read all data
+il071 <- read_xlsx("vauto_il071.xlsx")
+il082 <- read_xlsx("vauto_il082.xlsx")
+il088 <- read_xlsx("vauto_il088.xlsx")
+in048 <- read_xlsx("vauto_in048.xlsx")
+mo046 <- read_xlsx("vauto_mo046.xlsx")
+fl123 <- read_xlsx("vauto_fl123.xlsx")
+
+# add Dealership Columns
+fl121 <- fl121 %>% add_column(Dealership = 'FL121')
+fl123 <- fl123 %>% add_column(Dealership = 'FL123')
+il071 <- il071 %>% add_column(Dealership = 'IL071')
+il082 <- il082 %>% add_column(Dealership = 'IL082')
+il088 <- il088 %>% add_column(Dealership = 'IL088')
+in048 <- in048 %>% add_column(Dealership = 'IN048')
+mo046 <- mo046 %>% add_column(Dealership = 'MO046')
+
+# bind all dealership inventories together
+vauto <- rbind(fl123, il071, il082, il088, in048, mo046)
+
+# Clean up the data
+x <- vauto %>%
+  separate(Description, into = c("Type", "Model", "Trim"), sep = " > ", extra = "drop") %>%
+  select(-c(`Pricing Rules`, Action, `Min Stock`, `Target Day Supply`)) %>%
+  rename(Year = 'Model Year', Active = '# Active', Sold = '# Sold', DDS = 'Dlr Day Supply',
+         MDS = 'Mkt Day Supply') %>%
+  filter(is.na(Trim)) %>%
+  filter(Type != '---') %>%
+  filter(!is.na(Model)) %>%
+  select(-(Trim)) %>%
+  filter(Type == 'SUV' | Type == 'Car')
+
+# Export to Excel
+x <- as.data.frame(x)
+write.xlsx(x, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "vauto", row.names = FALSE, append = TRUE)
+
+##########################################################################################
+# Cleaning, setting up, and calculating the profits data.
+##########################################################################################
+
+# Clear all data
+rm(list=ls())
+
+# Read Excel Workbook file
+in048 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet", skip = 3)
+fl123 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (3)", skip = 3)
+il071 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (4)", skip = 3)
+mo046 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (5)", skip = 3)
+il088 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (6)", skip = 3)
+il082 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (7)", skip = 3)
+fl121 <- read_xls("DailyLogSheetFull.xls", sheet = "F&I Daily Log Sheet (8)", skip = 3)
+
+# Add dealership columns
+fl123$Dealership <- 'FL123'
+fl123 <- fl123[,-20]
+
+fl121$Dealership <- 'FL121'
+fl121 <- fl121[,-20]
+
+il071$Dealership <- 'IL071'
+il071 <- il071[,-20]
+
+il082$Dealership <- 'IL082'
+il082 <- il082[,-20]
+
+il088$Dealership <- 'IL088'
+il088 <- il088[,-20]
+
+in048$Dealership <- 'IN048'
+in048 <- in048[,-20]
+
+mo046$Dealership <- 'MO046'
+mo046 <- mo046[,-20]
+
+data <- rbind(fl121, fl123, il071, il082, il088, in048, mo046)
+
+data <- data[, c(1,15,25,26,27,28,31)]
+
+data2 <- data %>%
+  mutate_if(is.character, str_replace_all, pattern = 'SANTA FE', replacement = 'SANTA_FE') %>%
+  separate(VEHICLE, into = c("VEHICLE", "YEAR"), sep = (-4)) %>%
+  separate(VEHICLE, into = c("Make", "Model"), sep = " ", extra = "merge") %>%
+  filter(Make == "HYUNDAI" | Make == "GENESIS") %>%
+  mutate_if(is.character, str_replace_all, pattern = 'GENESIS G80', replacement = 'G80') %>%
+  mutate_if(is.character, str_replace_all, pattern = 'GENESIS G90', replacement = 'G90') %>%
+  mutate_if(is.character, str_replace_all, pattern = 'IONIC', replacement = 'IONIQ') %>%
+  separate(Model, into = 'Model', sep = " ", extra = "drop") %>%
+  filter(Model != ".G80")
+  
+data2 <- as.data.frame(data2)
+
+write.xlsx(data2, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Raw Profits", row.names = FALSE, 
+           append = TRUE)
+          
+##########################################################################################
+# Creating a recommended inventory statistics.
+##########################################################################################
+
+# Import Sales and Inventory Data
+sales <- read_xlsx("2019_Hyundai_Sales_Report.xlsx", sheet = 'Raw Data')
+inv <- read_xlsx("2019_Hyundai_Sales_Report.xlsx", sheet = 'Inventory')
+
+###################################################
+# 'FL123' 'FL121' 'IL071' ' IL082' 'IL088' "IN048' 'MO046'
+###################################################
+
+sales_1 <- sales %>%
+  filter(Dealership == 'MO046') %>%
+  group_by(Model) %>%
+  summarize(Sales = n()) %>%
+  mutate(Percent = (Sales / sum(Sales)) * 100) %>%
+  mutate(Percent = round(Percent, 2)) %>%
+  mutate(Model = toupper(Model))
+  
+  
+inv_1 <- inv %>%
+  filter(Dealership == 'MO046') %>%
+  group_by(Model) %>%
+  mutate(Stock = as.numeric(`Dealer Stock`)) %>%
+  summarize(Stock = sum(Stock), 
+            Total = sum(`Total`)) %>%
+  mutate(Percent_Stock = (Stock / sum(Stock)) * 100,
+         Percent_Total = (Total / sum(Total)) * 100) %>%
+  mutate(Percent_Stock = round(Percent_Stock, 2),
+         Percent_Total = round(Percent_Total, 2))
+
+full <- full_join(sales_1, inv_1, by = 'Model')
+
+MO046 <- full %>%
+  mutate(Difference = (Percent_Total - Percent)) %>%
+  rename('Percent of Sales' = Percent,
+         'In Stock' = Stock,
+         'Percent of Stock' = Percent_Stock,
+         'Percent of Total' = Percent_Total) %>%
+  add_column(Dealership = 'MO046')
+
+# Join data 
+data <- rbind(FL121, FL123, IL071, IL082, IL088, IN048, MO046)
+
+# Write to Excel
+data <- as.data.frame(data)
+
+write.xlsx(data, file = "2019_Hyundai_Sales_Report.xlsx", 
+           sheetName = "Recommended_Inventory", 
+           row.names = FALSE, 
+           append = TRUE)
