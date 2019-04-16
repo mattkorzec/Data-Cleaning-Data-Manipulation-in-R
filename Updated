@@ -457,3 +457,18 @@ write.xlsx(data, file = "2019_Hyundai_Sales_Report.xlsx",
            sheetName = "Recommended_Inventory", 
            row.names = FALSE, 
            append = TRUE)
+           
+##########################################################################################
+# Adding historical data to the main file.
+##########################################################################################           
+
+# Read all data
+hist <- read_xlsx("Sales_Per_Month.xlsx")
+
+# Change the type of date
+hist$month <- as_date(hist$month)
+
+# Append existing file to the main excel file as a new sheet
+hist <- as.data.frame(hist)
+write.xlsx(hist, file = "2019_Hyundai_Sales_Report.xlsx", sheetName = "Historical Data", row.names = FALSE, 
+           append = TRUE)
