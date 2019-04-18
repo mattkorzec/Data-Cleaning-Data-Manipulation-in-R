@@ -1,4 +1,4 @@
-# Data Science and Analysis in R
+# Data Cleaning and Manipulation in R
 # Main Code
 - Sales data cleaning and manipulation
 - Inventory data cleaning and analysis
